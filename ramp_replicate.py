@@ -34,6 +34,13 @@ notes:
 6/16
     - count ramp frequency using add_ci_freq_chan()
     - may want to assign variables to channels
+        - perhaps exposed streams are not always (or in this case) necessary
+            - just call read on task
+    - get actual experimental cables wired asap
+    
+    - probably need to put a low pass of ~1 khz on ramp trigger signal
+    
+    
 """
 
 class Ramp_Replicate():
@@ -71,7 +78,7 @@ class Ramp_Replicate():
         
         # add specified (or default) channels to respective tasks
         self.read_task.ai_channels.add_ai_voltage_chan('NI_PCIe-6351/' + in_channel)
-        self.ramp_freq_task.ci_channels.add_ci_pulse_chan_freq('NI_PCIe-6351/' + ctr_channel)
+        self.ramp_freq_task.ci_channels.add_ci_freq_chan('NI_PCIe-6351/' + ctr_channel)
         self.write_task.ao_channels.add_ao_voltage_chan('NI_PCIe-6351/' + out_channel)
         
         # expose in and out streams
