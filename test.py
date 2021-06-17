@@ -3,10 +3,9 @@ import numpy as np
 from nidaqmx import *
 
 
-with nq.Task() as task:
-    task.ai_channels.add_ai_voltage_chan('NI_PCIe-6351/ai4', )
-    print(task.read(10))
-    task.close()
+with nq.system.device.Device() as Dev:
+    
+
 '''
 with nq.Task() as freq_task:
 
