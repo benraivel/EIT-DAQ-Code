@@ -36,13 +36,13 @@ def setup():
     in_stream = nq._task_modules.in_stream.InStream(read_task)
     reader = nq.stream_readers.AnalogMultiChannelReader(in_stream)
     
-    # configure task sample timing
+    # may want to use implicit timing because of the finite task?
     timing = nq._task_modules.timing.Timing(read_task)
-    timing.cfg_samp_clk_timing()
+    
     
     # configure triggering (start and reference)
     trigger = nq._task_modules.triggering.start_trigger.StartTrigger(read_task)
-    trigger.cfg_dig_edge_start_trig('NI_PCIe-6351/ctr0')
+    trigger.cfg_dig_edge_start_trig()
     
     # data array creation
     
@@ -52,18 +52,31 @@ def setup():
     
     
 def get_time():
-    get_time_task = nq.Task()
-    counter_channel = nq._task_modules.channels.ci_channel.CIChannel(get_time_task, 'ctr_chan')
-    task_timing = nq._task_modules.timing.Timing(get_time_task)
     
-    #configure implicit timing
+    # create task to measure ramp time
+    time_task = nq.Task()
     
-    #set timebase source and rate
-    counter_channel.ci_ctr_timebase_src
-    counter_channel.
+    # add a pulse width counter channel to the task
+    time_task.ci_channels.add_ci_pulse_width_chan('NI_PCIe-6351/ctr0', 'pulse_width_channel', min_val= 0.01, max_val= 2)
+    
+    pulse_time_stream = nq._task_modules.in_stream.InStream(time_task)
+    
+    pulse_time_reader = nq.stream_readers.CounterReader(pulse_time_stream)
+    
+    ticks = pulse_time_reader.read_one_sample_uint32()
+    
+    time_sec = ticks/100000000
+    
+    return time_sec
+
+    time_task.close()
+    
+   
+    
+    
     
 def run():
     pass
 
 if __name__ == "__main__":
-    print(get_time())
+    print('Ramp Rise Time: ' + str(get_time()) + ' seconds')
