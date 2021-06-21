@@ -1,6 +1,6 @@
 import nidaqmx as nq
 from nidaqmx import *
-#from nidaqmx.constants import 
+from nidaqmx.constants import AcquisitionType
 import numpy as np
 import os
 import time
@@ -10,11 +10,12 @@ def take_data(iterations, samp_rate):
   # measure ramp time
   time = meas_ramp_time()
     
+  print(time)
   # initialize task and configurations
   stream_reader = task_init(samp_rate, time)
   
   # create data array
-  data = create_array(iterations, samp_rate, time)
+  data = create_array(iterations, 2, samp_rate, time)
   
   # loop for iterations
   
@@ -36,16 +37,9 @@ def task_init(samp_rate, time):
     in_stream = nq._task_modules.in_stream.InStream(read_task)
     reader = nq.stream_readers.AnalogMultiChannelReader(in_stream)
     
-    # 
-    timing = nq._task_modules.timing.Timing(read_task)
+    read_task.timing.cfg_samp_clk_timing(samp_rate, sample_mode = AcquisitionType.FINITE, samps_per_chan = int(samp_rate * time))
+    read_task.triggers.start_trigger.cfg_dig_edge_start_trig('/NI_PCIe-6351/PFI0')
     
-    timing.samp_clk_src = 
-    timing.samp_clk_rate = 
-    timing.cfg_samp_clk_timing(samp_rate)
-    
-     # configure triggering (start and reference)
-    trigger = nq._task_modules.triggering.start_trigger.StartTrigger(read_task)
-    trigger.cfg_dig_edge_start_trig('NI_PCIe-6351/PFI9')
     
     return reader
     
@@ -77,6 +71,7 @@ def create_array(iterations, channels, samp_rate, time):
     data = []
     for i in range(iterations):
         data.append(np.empty((channels, int(samp_rate*time))))
+    print(data)
     return data
 
 def log():
@@ -92,7 +87,7 @@ def save_data(data):
     '''
     date_time = time.ctime().split()
     day = date_time[0] + ' ' + date_time[1] + ' ' + date_time[2] + ', ' + date_time[4]
-    current_time = date_time[3]
+    current_time = date_time[3].split(':')[0] + ' ' + date_time[3].split(':')[1] + ' ' + date_time[3].split(':')[2]
     
     try:
         os.mkdir('C:\\Users\\bjraiv23\\Desktop\\Experimental-Data')
@@ -108,7 +103,34 @@ def save_data(data):
         pass
     
     for i in range(len(data)):
-        data[i].tofile('C:\\Users\\bjraiv23\\Desktop\\Experimental-Data\\' + day + '\\' + current_time + '\\' + i + '.csv', sep = ',')
+        #'C:\\Users\\bjraiv23\\Desktop\\Experimental-Data\\' + day + '\\' + current_time + '\\run' + str(i) + '.csv'
+        file = open('C:\\Users\\bjraiv23\\Desktop\\Experimental-Data\\' + day + '\\' + current_time + '\\run' + str(i) + '.csv', 'w')
+        for j in range(len(data[0][0])):
+            file.write(str(data[i][0][j]) + ', ' + str(data[i][1][j]) + '\n')
+
+
+
 
 if __name__ == "__main__":
     take_data(10, 100000)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    #hi
