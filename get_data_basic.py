@@ -38,6 +38,7 @@ def setup():
     
     # may want to use implicit timing because of the finite task?
     timing = nq._task_modules.timing.Timing(read_task)
+    timing.cfg_samp_clk_timing()
     
     
     # configure triggering (start and reference)
