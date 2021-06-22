@@ -1,9 +1,15 @@
 import nidaqmx as nq
 from nidaqmx import *
 from nidaqmx.constants import AcquisitionType
+
 import numpy as np
 import os
 import time
+
+import wolframclient as wc
+from wolframclient.language import wl, wlexpr
+from wolframclient.evaluation import WolframLanguageSession
+
 
 def take_data(iterations, samp_rate):
  
@@ -72,9 +78,22 @@ def create_array(iterations, channels, samp_rate, time):
         data.append(np.empty((channels, int(samp_rate*time))))
     return data
 
-def log():
-    pass
+def fit_freq(data, fabry_perot_index):
+    ''' 
+    given data returns list of quartic fit coefficients that give frequency(index)
+    '''
+    session = WolframLanguageSession()
     
+    coefficients = []
+    
+    for data_set in data:
+        fp_array = data_set[fabry_perot_index]
+        peaks = session.evaluate(wl.Transpose(wl.FindPeaks(fp_array, 80, 0, 1)))[0]
+        print(peaks)
+        
+
+    return coefficients
+                   
 def save_data(data):
     '''
     create a named and dated folder if one does not exist
@@ -110,16 +129,24 @@ def save_data(data):
 
 
 if __name__ == "__main__":
-    take_data(100, 500000)
+    fp_data_array = []
+    file = open("C:\\Users\\bjraiv23\\Desktop\\Experimental-Data\\Mon Jun 21, 2021\\15 54 24\\run0.csv", 'r')
+    line = file.readline().split(',')
+    while line is not None:
+        try:
+            fp_data_array.append(line[2])
+        except:
+            break
+        line = file.readline().split(',')
+    
+    data = [fp_data_array]
+    print(fit_freq(data, 0))
     
     
     
     
     
-    
-    
-    
-    
+   
     
     
     
