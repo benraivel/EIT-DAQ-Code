@@ -9,8 +9,7 @@ def take_data(iterations, samp_rate):
  
   # measure ramp time
   time = meas_ramp_time()
-    
-  print(time)
+
   # initialize task and configurations
   stream_reader = task_init(samp_rate, time)
   
@@ -71,7 +70,6 @@ def create_array(iterations, channels, samp_rate, time):
     data = []
     for i in range(iterations):
         data.append(np.empty((channels, int(samp_rate*time))))
-    print(data)
     return data
 
 def log():
@@ -106,13 +104,13 @@ def save_data(data):
         #'C:\\Users\\bjraiv23\\Desktop\\Experimental-Data\\' + day + '\\' + current_time + '\\run' + str(i) + '.csv'
         file = open('C:\\Users\\bjraiv23\\Desktop\\Experimental-Data\\' + day + '\\' + current_time + '\\run' + str(i) + '.csv', 'w')
         for j in range(len(data[0][0])):
-            file.write(str(data[i][0][j]) + ', ' + str(data[i][1][j]) + '\n')
+            file.write(str(data[i][0][j]) + ', ' + str(data[i][1][j]) +'\n')
 
 
 
 
 if __name__ == "__main__":
-    take_data(10, 100000)
+    take_data(100, 500000)
     
     
     
