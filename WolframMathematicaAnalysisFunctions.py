@@ -19,8 +19,10 @@ def fabry_perot_get_peaks(fp_array, smoothing, threshold, debug = False):
     debug returns peak heights as well
     '''
     session = WolframLanguageSession()
-    
+    print('session started')
+    print(fp_array)
     peaks = session.evaluate(wl.FindPeaks(fp_array, smoothing, 0, threshold))
+    print(peaks)
     
     session.terminate()
     
@@ -37,14 +39,15 @@ def fabry_perot_get_peaks(fp_array, smoothing, threshold, debug = False):
 def fabry_perot_fit_frequency(indices):
     
     session = WolframLanguageSession()
-    
+    print('session started')
     freq_data = []
     
     for i in range(len(indices)):
         freq_data.append([indices[i], 91.5*i])
     
+    print(freq_data)
     fit = session.evaluate(wl.CoefficientList(wl.Fit(freq_data, wlexpr('{1, x, x^2, x^3, x^4}')), wlexpr('{x}')))
-    
+    print(fit)
     session.terminate()
     
     return fit

@@ -9,8 +9,10 @@ import time
 import WolframMathematicaAnalysisFunctions as wlc
 
 import logging
+import warnings
 
-logging.basicConfig(level = logging.DEBUG)
+#logging.basicConfig(level = logging.DEBUG)
+warnings.filterwarnings('ignore')
 
 def take_data(iterations, samp_rate):
  
@@ -33,8 +35,6 @@ def take_data(iterations, samp_rate):
   analysis(data)
   save_data(data)
   
-  
-
 def task_init(samp_rate, time):
     read_task = nq.Task()
     read_task.ai_channels.add_ai_voltage_chan('NI_PCIe-6351/ai0')
@@ -49,7 +49,6 @@ def task_init(samp_rate, time):
     
     return reader
     
-
 def meas_ramp_time():
     # create task to measure ramp time
     # add a pulse width counter channel, expose in_stream, and create reader
@@ -66,9 +65,6 @@ def meas_ramp_time():
     time_task.close()
     
     return time_sec
-    
-    
-
 
 def create_array(iterations, channels, samp_rate, time):
     '''
@@ -89,6 +85,7 @@ def analysis(data):
         fp_signal = data_set[1]
         
         peaks = wlc.fabry_perot_get_peaks(fp_signal, 80, 1)
+        print(peaks)
         
         fit = wlc.fabry_perot_fit_frequency(peaks)
         print(fit)
@@ -127,17 +124,12 @@ def save_data(data):
         for j in range(len(data[0][0])):
             file.write(str(data[i][0][j]) + ', ' + str(data[i][1][j]) +'\n')
 
-
-
-
 if __name__ == "__main__":
     take_data(10, 100000)
     
     
     
-    
-    
-   
+ 
     
     
     
