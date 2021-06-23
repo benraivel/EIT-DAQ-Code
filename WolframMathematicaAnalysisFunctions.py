@@ -7,7 +7,7 @@ holds data analysis functions that use the wolfram python client
 '''
 
 # import wolfram packages
-import wolframclient as wc
+import wolframclient
 from wolframclient.language import wl, wlexpr
 from wolframclient.evaluation import WolframLanguageSession
 
@@ -15,14 +15,18 @@ from wolframclient.evaluation import WolframLanguageSession
 def fabry_perot_get_peaks(fp_array, smoothing, threshold, debug = False):
     ''' 
     pass in 1-D array of fabry perot data
-    returns indices of peaks with gaussian smoothing and 
-    
+    returns indices of peaks that survive gaussian smoothing above threshold
+    debug returns peak heights as well
     '''
     session = WolframLanguageSession()
     
     peaks = session.evaluate(wl.FindPeaks(fp_array, smoothing, 0, threshold))
+    
+    session.terminate()
+    
     if debug:
         return peaks
+    
     else:
         indices = []
         for peak in peaks:
@@ -30,5 +34,17 @@ def fabry_perot_get_peaks(fp_array, smoothing, threshold, debug = False):
         return indices
 
 
-def fabry_perot_fit_frequency():
-    pass
+def fabry_perot_fit_frequency(indices):
+    
+    session = WolframLanguageSession()
+    
+    freq_data = []
+    
+    for i in range(len(indices)):
+        freq_data.append([indices[i], 91.5*i])
+    
+    fit = session.evaluate(wl.CoefficientList(wl.Fit(freq_data, wlexpr('{1, x, x^2, x^3, x^4}')), wlexpr('{x}')))
+    
+    session.terminate()
+    
+    return fit

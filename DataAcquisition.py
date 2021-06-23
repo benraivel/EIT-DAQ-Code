@@ -8,6 +8,9 @@ import time
 
 import WolframMathematicaAnalysisFunctions as wlc
 
+import logging
+
+logging.basicConfig(level = logging.DEBUG)
 
 def take_data(iterations, samp_rate):
  
@@ -27,6 +30,7 @@ def take_data(iterations, samp_rate):
       stream_reader.read_many_sample(array)
   
   # write data to file
+  analysis(data)
   save_data(data)
   
   
@@ -43,12 +47,10 @@ def task_init(samp_rate, time):
     read_task.timing.cfg_samp_clk_timing(samp_rate, sample_mode = AcquisitionType.FINITE, samps_per_chan = int(samp_rate * time))
     read_task.triggers.start_trigger.cfg_dig_edge_start_trig('/NI_PCIe-6351/PFI0')
     
-    
     return reader
     
 
 def meas_ramp_time():
-    
     # create task to measure ramp time
     # add a pulse width counter channel, expose in_stream, and create reader
     time_task = nq.Task()
@@ -56,14 +58,16 @@ def meas_ramp_time():
     pulse_time_stream = nq._task_modules.in_stream.InStream(time_task)
     pulse_time_reader = nq.stream_readers.CounterReader(pulse_time_stream)
     
-    
     # take sample, convert to seconds and return
     ticks = pulse_time_reader.read_one_sample_uint32()
     time_sec = ticks/100000000
-    return time_sec
     
     # close task
     time_task.close()
+    
+    return time_sec
+    
+    
 
 
 def create_array(iterations, channels, samp_rate, time):
@@ -76,7 +80,21 @@ def create_array(iterations, channels, samp_rate, time):
         data.append(np.empty((channels, int(samp_rate*time))))
     return data
 
+def analysis(data):
+    
+    analyzed_data = []
+    
+    for data_set in data:
+        error_signal = data_set[0]
+        fp_signal = data_set[1]
+        
+        peaks = wlc.fabry_perot_get_peaks(fp_signal, 80, 1)
+        
+        fit = wlc.fabry_perot_fit_frequency(peaks)
+        print(fit)
+        analyzed_data.append([error_signal, fp_signal, peaks, fit])
 
+    return analyzed_data
                    
 def save_data(data):
     '''
@@ -113,7 +131,7 @@ def save_data(data):
 
 
 if __name__ == "__main__":
-    
+    take_data(10, 100000)
     
     
     

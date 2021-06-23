@@ -1,0 +1,35 @@
+DEBUG:wolframclient.evaluation.kernel.kernelcontroller:
+    Initializing kernel C:\Program Files\Wolfram Research\Mathematica\12.2\WolframKernel.exe using script: C:\Users\bjraiv23\Anaconda3\lib\site-packages\wolframclient\evaluation\kernel\initkernel.m
+
+DEBUG:wolframclient.evaluation.kernel.zmqsocket:
+    ZMQ socket bound to tcp://127.0.0.1:51910
+
+DEBUG:wolframclient.evaluation.kernel.zmqsocket:
+    ZMQ socket bound to tcp://127.0.0.1:51915
+
+INFO:wolframclient.evaluation.kernel.kernelcontroller:
+    Kernel writes commands to socket: <Socket: uri=tcp://127.0.0.1:51910>
+
+INFO:wolframclient.evaluation.kernel.kernelcontroller:
+    Kernel receives evaluated expressions from socket: <Socket: uri=tcp://127.0.0.1:51915>
+
+DEBUG:wolframclient.evaluation.kernel.kernelcontroller:
+    Kernel called using command: C:\Program Files\Wolfram Research\Mathematica\12.2\WolframKernel.exe -noprompt -initfile C:\Users\bjraiv23\Anaconda3\lib\site-packages\wolframclient\evaluation\kernel\initkernel.m -run ClientLibrary`Private`KernelPrivateStart["tcp://127.0.0.1:51910", "tcp://127.0.0.1:51915"];.
+
+INFO:wolframclient.evaluation.kernel.kernelcontroller:
+    Kernel process started with PID: 11968
+
+WARNING:wolframclient.evaluation.kernel.kernelcontroller:
+    Socket exception: Socket operation aborted.
+
+WARNING:wolframclient.evaluation.kernel.kernelcontroller:
+    Failed to start.
+
+INFO:wolframclient.evaluation.kernel.kernelcontroller:
+    Start termination on kernel <WolframKernelController[wolfram-kernel-16 ✅], "C:\Program Files\Wolfram Research\Mathematica\12.2\WolframKernel.exe", pid:11968, kernel sockets: (in:tcp://127.0.0.1:51915, out:tcp://127.0.0.1:51910)>
+
+INFO:wolframclient.evaluation.kernel.kernelcontroller:
+    Killing kernel process: 11968
+
+INFO:wolframclient.evaluation.kernel.kernelcontroller:
+    Start termination on kernel <WolframKernelController[wolfram-kernel-16 ❌], "C:\Program Files\Wolfram Research\Mathematica\12.2\WolframKernel.exe">
