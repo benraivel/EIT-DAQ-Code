@@ -1,0 +1,3 @@
+tskill mathematica
+tskill wolframkernel
+tskill mathkernel

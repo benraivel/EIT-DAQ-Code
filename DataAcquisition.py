@@ -4,20 +4,22 @@ from nidaqmx.constants import AcquisitionType
 
 import numpy as np
 import os
+
 import time
 
-import WolframMathematicaAnalysisFunctions as wlc
+import WolframMathematicaAnalysisFunctions as wmaf
 
 import logging
 import warnings
 
 #logging.basicConfig(level = logging.DEBUG)
-warnings.filterwarnings('ignore')
+#warnings.filterwarnings('ignore')
 
 def take_data(iterations, samp_rate):
  
   # measure ramp time
   time = meas_ramp_time()
+  print('Ramp Time: ' + str(time) + ' seconds')
 
   # initialize task and configurations
   stream_reader = task_init(samp_rate, time)
@@ -26,14 +28,21 @@ def take_data(iterations, samp_rate):
   data = create_array(iterations, 2, samp_rate, time)
   
   # loop for iterations
-  
+  print('collecting ' + str(iterations) + ' sets of data')  
   for array in data:
-      
       stream_reader.read_many_sample(array)
   
+  # analyze data for peaks
+  peak_data = wmaf.fabry_perot_fit_frequency(data)
+  try:
+      #peak_data = wmaf.fabry_perot_fit_frequency(data)
+      pass
+  except:
+      print('analysis failed')
+      
   # write data to file
-  analysis(data)
-  save_data(data)
+  #save_data(data)
+  
   
 def task_init(samp_rate, time):
     read_task = nq.Task()
@@ -76,23 +85,7 @@ def create_array(iterations, channels, samp_rate, time):
         data.append(np.empty((channels, int(samp_rate*time))))
     return data
 
-def analysis(data):
-    
-    analyzed_data = []
-    
-    for data_set in data:
-        error_signal = data_set[0]
-        fp_signal = data_set[1]
-        
-        peaks = wlc.fabry_perot_get_peaks(fp_signal, 80, 1)
-        print(peaks)
-        
-        fit = wlc.fabry_perot_fit_frequency(peaks)
-        print(fit)
-        analyzed_data.append([error_signal, fp_signal, peaks, fit])
-
-    return analyzed_data
-                   
+             
 def save_data(data):
     '''
     create a named and dated folder if one does not exist
@@ -123,6 +116,8 @@ def save_data(data):
         file = open('C:\\Users\\bjraiv23\\Desktop\\Experimental-Data\\' + day + '\\' + current_time + '\\run' + str(i) + '.csv', 'w')
         for j in range(len(data[0][0])):
             file.write(str(data[i][0][j]) + ', ' + str(data[i][1][j]) +'\n')
+            
+        file.close()
 
 if __name__ == "__main__":
     take_data(10, 100000)

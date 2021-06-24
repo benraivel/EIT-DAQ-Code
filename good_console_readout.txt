@@ -1,0 +1,116 @@
+Python 3.8.8 (default, Apr 13 2021, 15:08:03) [MSC v.1916 64 bit (AMD64)]
+Type "copyright", "credits" or "license" for more information.
+
+IPython 7.22.0 -- An enhanced Interactive Python.
+
+runfile('C:/Users/bjraiv23/Documents/GitHub/Python-Experiment-Control-Code/DataAcquisition.py', wdir='C:/Users/bjraiv23/Documents/GitHub/Python-Experiment-Control-Code')
+session started
+[-0.01742361 -0.01677994 -0.01436617 ... -0.014688   -0.01613626
+ -0.01420525]
+()
+[]
+session started
+[]
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+session started
+[-0.01838912 -0.01661902 -0.01581443 ... -0.01517076 -0.01790636
+ -0.0182282 ]
+()
+[]
+session started
+[]
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+session started
+[-0.01677994 -0.01758453 -0.01694085 ... -0.01694085 -0.01790636
+ -0.01806728]
+()
+[]
+session started
+[]
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+session started
+[-0.01581443 -0.01549259 -0.01742361 ... -0.0164581  -0.01694085
+ -0.01871095]
+()
+[]
+session started
+[]
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+session started
+[-0.01694085 -0.0209638  -0.01919371 ... -0.01871095 -0.01855003
+ -0.01597535]
+()
+[]
+session started
+[]
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+session started
+[-0.01742361 -0.01484892 -0.01806728 ... -0.01694085 -0.01629718
+ -0.01581443]
+()
+[]
+session started
+[]
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+session started
+[-0.01484892 -0.01436617 -0.01742361 ... -0.01887187 -0.01774544
+ -0.01677994]
+()
+[]
+session started
+[]
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+session started
+[-0.01629718 -0.01710177 -0.01774544 ... -0.01404433 -0.01549259
+ -0.01549259]
+()
+[]
+session started
+[]
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+session started
+[-0.0164581  -0.01356158 -0.01629718 ... -0.01661902 -0.02064197
+ -0.01935462]
+()
+[]
+session started
+[]
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+session started
+[-0.01500984 -0.01661902 -0.01517076 ... -0.01533167 -0.0164581
+ -0.01806728]
+()
+[]
+session started
+[]
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+If the number of argument to Fit is fewer than 3, the first argument should be a list {designMatrix, response}.
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
+(Fit[(), (1, Global`x, Power[Global`x, 2], Power[Global`x, 3], Power[Global`x, 4])],)
