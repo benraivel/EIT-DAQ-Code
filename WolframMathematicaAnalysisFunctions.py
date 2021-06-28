@@ -1,23 +1,13 @@
-'''
-Created on Wed Jun 23 09:18:41 2021
-
-@author: bjraiv23
-
-holds data analysis functions that use the wolfram python client
-'''
-
 import time
 import subprocess
 import logging
 import warnings
-
-# import wolfram packages
 import wolframclient
 from wolframclient.language import wl, wlexpr
 from wolframclient.evaluation import WolframLanguageSession
 
-
 def terminate_kernels():
+     print('terminating mathematica kernels')
      process = subprocess.run("killmathematica.cmd")
      print(process)
      
@@ -57,27 +47,18 @@ def fabry_perot_get_peaks(data, smoothing, threshold):
     print('fabry_perot_get_peaks() session stopped')
     
     return peak_data
-    
-    
 
-
-def fabry_perot_fit_frequency(data):
-    
-    sets = len(data)
-    
-    print('finding fabry perot peak indices for data')
-    peak_data_set = fabry_perot_get_peaks(data, 80, 4)
-    print('peaks found, terminating mathematica kernels')
-    
-    terminate_kernels()
-    
+def generate_frequency_fit_data(data):
     freq_fit_data_set = []
-    for peak_data in peak_data_set:
+    for peak_data in data:
         freq_fit_data = []
         for i in range(len(peak_data)):
             freq_fit_data.append([peak_data[0][i], 91.5*i])
         freq_fit_data_set.append(freq_fit_data)
-    print(freq_fit_data_set[0])
+    #print(freq_fit_data_set[0])
+
+def fabry_perot_fit_frequency(data):
+    freq_fit_data_set = generate_frequency_fit_data(peak_data_set)
     session = WolframLanguageSession()
     session.start(block = True)
     start_time = time.time()
@@ -94,3 +75,15 @@ def fabry_perot_fit_frequency(data):
     print('fabry_perot_fit_frequency() session stopped')
     
     return fit
+
+
+
+
+
+
+
+
+
+
+
+# hi
