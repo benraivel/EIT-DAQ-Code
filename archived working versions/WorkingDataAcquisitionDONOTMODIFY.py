@@ -14,18 +14,8 @@ from nidaqmx.constants import AcquisitionType
 import numpy as np
 import os
 import time
+import sys
 
-'''
-# Wolfram stuff WILL work but less important right now
-
-import WolframMathematicaAnalysisFunctions as wmaf
-
-import logging
-import warnings
-
-#logging.basicConfig(level = logging.DEBUG)
-#warnings.filterwarnings('ignore')
-'''
 def take_data(iterations, samp_rate):
  
   # measure ramp time
@@ -42,21 +32,15 @@ def take_data(iterations, samp_rate):
   print('collecting ' + str(iterations) + ' sets of data')  
   for array in data:
       stream_reader.read_many_sample(array)
-  
-  # analyze data for peaks
-  #peak_data = wmaf.fabry_perot_fit_frequency(data)
-  try:
-      #peak_data = wmaf.fabry_perot_fit_frequency(data)
-      pass
-  except:
-      print('analysis failed')
       
   # write data to file
   save_data(data)
  
 
-def task_init(samp_rate, time):  
+def task_init(samp_rate, time):
+    # create task and channels to collect data
     read_task = nq.Task()
+    
     read_task.ai_channels.add_ai_voltage_chan('NI_PCIe-6351/ai0')
     read_task.ai_channels.add_ai_voltage_chan('NI_PCIe-6351/ai1')
     
@@ -120,7 +104,8 @@ def save_data(data):
     try:
         os.mkdir('C:\\Users\\bjraiv23\\Desktop\\Experimental-Data\\' + day + '\\' + current_time)    
     except:
-        pass
+        print('DATA FOLDER DUPLICATION\n' + 'terminating python to prevent data loss\n' +'do not run file more frequently than once per minute')
+        sys.exit()
     
     for i in range(len(data)):
         #'C:\\Users\\bjraiv23\\Desktop\\Experimental-Data\\' + day + '\\' + current_time + '\\run' + str(i) + '.csv'
