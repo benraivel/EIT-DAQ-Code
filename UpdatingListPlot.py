@@ -2,11 +2,7 @@
 holds a set of data [[y00, y01, y02 ...], [y10, y11, y12 ...], ...]
 as well as the associated plot image (.gif)
 '''
-
-import time
 from wolframclient.language import wl
-import tkinter as tk
-from tkinter import ttk
 
 class UpdatingListPlot():
     
@@ -22,4 +18,5 @@ class UpdatingListPlot():
     def plot_data(self):
         return self.session.evaluate(wl.Export(wl.LocalObject(self.name), wl.Listplot(self.data), "GIF"))
         
-    
+if __name__ == "__main__":
+    pass

@@ -1,6 +1,5 @@
 ''' 
-notes:
-    things that need to be evaluated:
+create one off evaluator pool to run constantly during experiment
 '''
 
 

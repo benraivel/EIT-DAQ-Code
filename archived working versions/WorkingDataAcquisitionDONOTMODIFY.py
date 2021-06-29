@@ -1,4 +1,7 @@
 '''
+"archiving" this version 6/29/21 as a minimum-working-version
+i.e. this implements the new NIDAQmx stuff but not very user-freindly for anyone but me 
+
 when run as __main__ take_data(10 [iterations], 100,000 [Hz]) is called
 modify last line of the file to change number of data sets collected or sampling frequency
 data is saved at C:\\Users\\bjraiv23\\Desktop\\Experimental-Data\\[CURRENT DATE]\\[HH MM SS]
@@ -13,6 +16,7 @@ import os
 import time
 
 '''
+# Wolfram stuff WILL work but less important right now
 
 import WolframMathematicaAnalysisFunctions as wmaf
 
@@ -51,17 +55,7 @@ def take_data(iterations, samp_rate):
   save_data(data)
  
 
-def task_init(samp_rate, time):
-
-
-
-
-
-
-
-
-  
-    
+def task_init(samp_rate, time):  
     read_task = nq.Task()
     read_task.ai_channels.add_ai_voltage_chan('NI_PCIe-6351/ai0')
     read_task.ai_channels.add_ai_voltage_chan('NI_PCIe-6351/ai1')
@@ -74,6 +68,7 @@ def task_init(samp_rate, time):
     read_task.triggers.start_trigger.cfg_dig_edge_start_trig('/NI_PCIe-6351/PFI0')
     
     return reader
+
 def meas_ramp_time():
 
     # create task to measure ramp time
@@ -101,7 +96,6 @@ def create_array(iterations, channels, samp_rate, time):
     for i in range(iterations):
         data.append(np.empty((channels, int(samp_rate*time))))
     return data
-
 
 def save_data(data):
     '''

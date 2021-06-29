@@ -6,6 +6,8 @@ notes:
     - gif probably easiest way to create scope feed
     - option to open experimental data viewer window with ploting functions for already collected data
     - need to pass in counter reader to control updates
+    - create task triggered (by falling edge?) to update the scope screens
+        - store temporary things in dictionaries
 '''
 import tkinter as tk
 from tkinter import ttk
