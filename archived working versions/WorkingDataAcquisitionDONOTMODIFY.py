@@ -57,7 +57,7 @@ def meas_ramp_time():
 
     # create task to measure ramp time
     # add a pulse width counter channel, expose in_stream, and create reader
-    time_task = nq.Task()
+    time_task = nq.Task()   -+
     time_task.ci_channels.add_ci_pulse_width_chan('NI_PCIe-6351/ctr0', 'pulse_width_channel', min_val= 0.01, max_val= 2)
     pulse_time_stream = nq._task_modules.in_stream.InStream(time_task)
     pulse_time_reader = nq.stream_readers.CounterReader(pulse_time_stream)
