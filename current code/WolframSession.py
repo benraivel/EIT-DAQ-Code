@@ -89,11 +89,11 @@ class WolframSession():
 
 
 
-    def terminate_kernels(self):
+    def __terminate_kernels(self):
         ''' 
         kills all local mathematica/wolfram kernels, use carefully
         '''
-        process = subprocess.run("killmathematica.cmd")
+        process = subprocess.run("C:\\Users\\bjraiv23\\Documents\\GitHub\\Python-Experiment-Control-Code\\utility\\killmathematica.cmd")
         return str(process)
 
 
