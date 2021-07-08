@@ -14,9 +14,12 @@ modify last line of the file to change number of data sets collected or sampling
 '''
 # import NI python API 
 import nidaqmx as nq
+from nidaqmx import *
 
 # import necessary nidaqmx constants
 from nidaqmx.constants import AcquisitionType
+
+import WolframSession as ws                                                                                                                                          
 
 # import other modules
 import numpy as np
@@ -105,17 +108,84 @@ def create_array(iterations, channels, samp_rate, time):
 
 
 
-def analyze_single(data):
+def analyze_single(session, single_set):
     '''
     using a WolframSession() fit one set
     '''
-    pass
+    difference = single_set[0]
+    fabry_perot = single_set[1]
+    
+    peaks = session.find_fabry_perot_peaks(fabry_perot)
+    
+    return peaks
+
 
 def analyze_all(data):
     '''
-    iterate analyze_single use fits to offset data sets by integer amount of indecies then average
+    iterate analyze_single use fits to offset data sets by integer amount of indicies then average
     '''
-    pass
+    analysis_session = ws.WolframSession()
+    peaks_collection = []
+    for single_set in data:
+        peaks_collection.append(analyze_single(analysis_session, single_set))
+        
+    return peaks_collection
+
+def analyze_peak_seperations(peaks):
+    '''
+    find seperation in indices between peaks
+    
+    use to detect peaks that are strangely-too-close-together
+    
+    possibly useful to tune smoothing/threshold
+    
+    also a slightly isolated set of more seperated peaks
+    '''
+    
+    seperation_set = []
+    
+    for peak_data in peaks:
+        seperations = []
+        
+        for i in range(len(peak_data)):
+            try:
+                seperations.append(peak_data[i+1] - peak_data[i])
+            except:
+               pass
+        seperation_set.append(seperations)  
+    return seperation_set  
+
+
+def fix_found_peaks(peaks):
+    '''
+    given a set of found peaks:
+        - find the seperation (indices) of each peak from the next
+        - if two peaks are very close replace with single peak
+        - either average location or use the higher one
+    '''
+    # create array to hold peak seperation data
+    seperations = []
+    
+    # loop over peaks
+    for peak in peaks:
+        seperations.append()
+        
+    return
+
+def average_data(data):
+    size = len(data[0][0])
+    iterations = len(data)
+    avg_difference = np.zeros(size)
+    avg_fabry_perot = np.zeros(size)
+    for data_set in data:
+        for i in range(size):
+            avg_difference[i] += data_set[0][i]
+            avg_fabry_perot += data_set[1][i]
+    for point in avg_difference:
+        point = point/iterations
+    for point in avg_fabry_perot:
+        point = point/iterations
+    return [avg_difference, avg_fabry_perot]
 
 def save_data(data):
     '''
@@ -185,7 +255,16 @@ def main(iterations, samp_rate):
     # loop for iterations 
     for array in data:
         stream_reader.read_many_sample(array)
-            
+        
+    averages = average_data(data)
+    
+    print(averages)
+    
+    peaks = analyze_all(data)
+    
+    print(peaks)
+    
+    print(analyze_peak_seperations(peaks))
     # write data to file
     save_data(data)
 
@@ -193,4 +272,4 @@ def main(iterations, samp_rate):
 
 # file main method call
 if __name__ == "__main__":
-    main(10, 100000)
+    main(10, 500000)

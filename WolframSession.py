@@ -40,7 +40,7 @@ class WolframSession():
 
 
     
-    def find_fabry_perot_peaks(self, fp_array, smoothing = 80, threshold = 3):
+    def find_fabry_perot_peaks(self, fp_array, smoothing = 80, threshold = 3.5):
         '''
         given a 1D array of fabry perot data:
             - find peaks using smoothing and threshold
@@ -74,7 +74,7 @@ class WolframSession():
 
 
         
-    def generate_frequency_data(self, peaks):
+    def __generate_frequency_data(self, peaks):
         
         npeak = len(peaks)
         
@@ -89,16 +89,16 @@ class WolframSession():
 
 
 
-def terminate_kernels():
-    ''' 
-    kills all local mathematica/wolfram kernels, use carefully
-    '''
-    process = subprocess.run("killmathematica.cmd")
-    return str(process)
+    def terminate_kernels(self):
+        ''' 
+        kills all local mathematica/wolfram kernels, use carefully
+        '''
+        process = subprocess.run("killmathematica.cmd")
+        return str(process)
 
 
 
-def load_data_for_test(return_fp = True):
+def load_data_for_test( return_fp = True):
     '''
     use for developing wolfram functions without needing to gather data
     
@@ -130,9 +130,13 @@ def load_data_for_test(return_fp = True):
 
 if __name__ == "__main__":
     
-    test_array = load_data_for_test()
+    
     
     test_session = WolframSession()
+    
+    test_session.terminate_kernels()
+    
+    test_array = load_data_for_test()
     
     peaks = test_session.find_fabry_perot_peaks(test_array)
     
