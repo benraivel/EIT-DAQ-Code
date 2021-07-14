@@ -156,23 +156,12 @@ def analyze_peak_seperations(peaks):
     return seperation_set  
 
 
-def fix_found_peaks(peaks):
-    '''
-    given a set of found peaks:
-        - find the seperation (indices) of each peak from the next
-        - if two peaks are very close replace with single peak
-        - either average location or use the higher one
-    '''
-    # create array to hold peak seperation data
-    seperations = []
-    
-    # loop over peaks
-    for peak in peaks:
-        seperations.append()
-        
-    return
 
 def average_data(data):
+    '''
+    find a basic average
+    '''
+
     size = len(data[0][0])
     iterations = len(data)
     avg_difference = np.zeros(size)
@@ -256,18 +245,18 @@ def main(iterations, samp_rate):
     for array in data:
         stream_reader.read_many_sample(array)
         
-    averages = average_data(data)
+    #averages = average_data(data)
     
-    print(averages)
+    #print(averages)
     
-    peaks = analyze_all(data)
+    #peaks = analyze_all(data)
     
-    print(peaks)
+    #print(peaks)
     
-    print(analyze_peak_seperations(peaks))
+    #print(analyze_peak_seperations(peaks))
     # write data to file
     save_data(data)
-
+     
 
 
 # file main method call
