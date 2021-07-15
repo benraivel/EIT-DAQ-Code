@@ -98,27 +98,23 @@ class WolframSession():
         #wolfram_peaks = self.find_fabry_perot_peaks(fp_array, smoothing = 80, sharpness = 0.0001, threshold = 1)
         scipy_peaks = find_peaks(fp_array, height = 2, distance = 200)
         print(scipy_peaks[0])      
-        data = self.generate_frequency_data(scipy_peaks[0])        
+        data = self.generate_frequency_data(scipy_peaks[0])
         fit = self.session.evaluate(wl.CoefficientList(wl.Fit(data, wlexpr('{1, x, x^2, x^3, x^4}'), wlexpr('{x}')), wlexpr('{x}')))
         
         return fit
 
 
-    def get_plot(self, data, frequency_fit = None):
+    def get_plot(self, data):
         '''
         given an array of data:
             - plot with Listplot with full range
             - rasterize as a large image and get pixel data in array
             - convert to tk compatible image with PIL and return
         '''
-        if frequency_fit == None:
+        try:
+            plot_data = np.asarray(np.uint8(self.session.evaluate(wl.ImageData(wl.Image(wl.ListPlot(data, PlotRange = 'Full', ScalingFunctions = [['fit', wl.InverseFunction('fit')], 'None']), ImageSize = 'Medium'), ImageResolution = 200)) * 255))
+        except:
             plot_data = np.asarray(np.uint8(self.session.evaluate(wl.ImageData(wl.Image(wl.ListPlot(data, wlexpr('PlotRange -> Full'), wlexpr('ImageSize -> Medium')), wlexpr('ImageResolution -> 200')))) * 255))
-            
-        else:
-            try:
-                 plot_data = np.asarray(np.uint8(self.session.evaluate(wl.ImageData(wl.Image(wl.ListPlot(data, wlexpr('PlotRange -> Full'), wlexpr('ScalingFunctions ->'), wlexpr('ImageSize -> Medium')), wlexpr('ImageResolution -> 200')))) * 255))
-            except:
-                pass
 
         return ImageTk.PhotoImage(Image.fromarray(plot_data))
 
