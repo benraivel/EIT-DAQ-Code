@@ -11,12 +11,15 @@ from wolframclient.evaluation import WolframLanguageSession
 
 # import other necessary modules
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageTk
 import time
 from datetime import timedelta
 import subprocess
 import logging
 import warnings
+
+# cheat with scipy:
+from scipy.signal import find_peaks
 
 
 class WolframSession():
@@ -40,25 +43,28 @@ class WolframSession():
         return 'Wolfram Language Client session finished \nTotal elapsed time: ' + str(elapsed_time)
 
    
-    def find_fabry_perot_peaks(self, fp_array, smoothing = 80, threshold = 3.5):
+    def find_fabry_perot_peaks(self, fp_array, smoothing = 80, sharpness = 0, threshold = 3):
         '''
         given a 1D array of fabry perot data:
             - find peaks using smoothing and threshold
             - return array of indices only
         '''
         peak_index_data = []
-        peaks = self.session.evaluate(wl.Transpose(wl.FindPeaks(fp_array, smoothing, 0, threshold)))
-        indices = peaks[0]
-        for index in indices:
-            try:
-                peak_index_data.append(int(index))
-            except:
-                peak_index_data.append(int(index[0]/index[1]))
+        peaks = self.session.evaluate(wl.Transpose(wl.FindPeaks(fp_array, smoothing, sharpness, threshold)))
+        try:
+            indices = peaks[0]
+            for index in indices:
+                try:
+                    peak_index_data.append(int(index))
+                except:
+                    peak_index_data.append(int(index[0]/index[1]))
+        except:
+            pass
         
         return peak_index_data
 
 
-    def __remove_duplicated_peaks(self, peaks):
+    def remove_duplicated_peaks(self, peaks):
         '''
         given found peaks, find peaks that are too close together and remove the lower
         '''
@@ -70,7 +76,7 @@ class WolframSession():
             seperations.append()
 
     
-    def __generate_frequency_data(self, peaks):
+    def generate_frequency_data(self, peaks):
         
         npeak = len(peaks)
         
@@ -89,30 +95,43 @@ class WolframSession():
             - generate frequency 'data'
             - return coefficients of quartic fit
         '''
-        peaks = self.find_fabry_perot_peaks(fp_array)       
-        data = self.generate_frequency_data(peaks)        
+        #wolfram_peaks = self.find_fabry_perot_peaks(fp_array, smoothing = 80, sharpness = 0.0001, threshold = 1)
+        scipy_peaks = find_peaks(fp_array, height = 2, distance = 200)
+        print(scipy_peaks[0])      
+        data = self.generate_frequency_data(scipy_peaks[0])        
         fit = self.session.evaluate(wl.CoefficientList(wl.Fit(data, wlexpr('{1, x, x^2, x^3, x^4}'), wlexpr('{x}')), wlexpr('{x}')))
         
         return fit
 
 
-    def get_plot(self, data):
+    def get_plot(self, data, frequency_fit = None):
         '''
         given an array of data:
             - plot with Listplot with full range
             - rasterize as a large image and get pixel data in array
-            - convert to image with PIL and return
+            - convert to tk compatible image with PIL and return
         '''
-        plot_data = np.asarray(np.uint8(self.session.evaluate(wl.ImageData(wl.Image(wl.ListPlot(data, wlexpr('PlotRange -> Full'), wlexpr('ImageSize -> Large')), wlexpr('ImageResolution -> 500')))) * 255))
-        return Image.fromarray(plot_data)
+        if frequency_fit == None:
+            plot_data = np.asarray(np.uint8(self.session.evaluate(wl.ImageData(wl.Image(wl.ListPlot(data, wlexpr('PlotRange -> Full'), wlexpr('ImageSize -> Medium')), wlexpr('ImageResolution -> 200')))) * 255))
+            
+        else:
+            try:
+                 plot_data = np.asarray(np.uint8(self.session.evaluate(wl.ImageData(wl.Image(wl.ListPlot(data, wlexpr('PlotRange -> Full'), wlexpr('ScalingFunctions ->'), wlexpr('ImageSize -> Medium')), wlexpr('ImageResolution -> 200')))) * 255))
+            except:
+                pass
 
-    def __terminate_kernels(self):
-        ''' 
-        kills all local mathematica/wolfram kernels, use carefully
-        '''
-        process = subprocess.run("C:\\Users\\bjraiv23\\Documents\\GitHub\\Python-Experiment-Control-Code\\utility\\killmathematica.cmd")
-        return str(process)
+        return ImageTk.PhotoImage(Image.fromarray(plot_data))
 
+    
+    def define_function(self, name, arguments, definition):
+        function_str = name + '['
+        for argument in arguments:
+            function_str += argument + '_, '
+        function_str.rstrip()
+        function_str.rstrip()
+        function_str += '] := ' + definition
+        print(function_str)
+        self.session.evaluate(wlexpr(function_str))
 
     def load_data_for_test(self, return_fp = True):
         '''
@@ -144,17 +163,10 @@ class WolframSession():
             return [difference_data, fabry_perot_data]
 
 
-if __name__ == "__main__":
-    test_session = WolframSession()
-    
-    data = test_session.load_data_for_test()
+def terminate_kernels():
+        ''' 
+        kills all local mathematica/wolfram kernels, use carefully
+        '''
+        process = subprocess.run("C:\\Users\\bjraiv23\\Documents\\GitHub\\Python-Experiment-Control-Code\\utility\\killmathematica.cmd")
+        return str(process)
 
-    print(test_session.get_plot(data))
-
-
-
-
-
-
-
-#

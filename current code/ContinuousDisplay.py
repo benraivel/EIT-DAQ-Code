@@ -12,7 +12,8 @@
 # import graphics
 import tkinter as tk
 from tkinter import ttk
-from PIL import Image, ImageTk
+from tkinter import messagebox as msg
+from tkinter.constants import ANCHOR
 
 # import NI python API 
 import nidaqmx as nq
@@ -41,81 +42,137 @@ class ContinuousDisplay(ttk.Frame):
         self.parent = parent
 
         # create and grid tk/ttk frame with canvas to plot image
-        self.scope_frame = ttk.Frame(self.parent, height = 2520, width = 4000)
-        self.image_canvas = tk.Canvas(self.scope_frame, height = 2520, width = 4000)
+        self.scope_frame = ttk.Frame(self.parent)
+        self.image_canvas = tk.Canvas(self.scope_frame, height = 643, width = 1000)
+        self.image_canvas.grid(padx = 50, pady = 50)
         self.scope_frame.grid(row = 0)
         
-        # create and grid frame for controls
-        self.control_panel = ttk.Frame(self.parent)
+        # create and grid control panel frame
+        self.control_panel = ttk.LabelFrame(self.parent, text = 'Control Panel')
         self.control_panel.grid(row = 1)
-
-        # create spinbox to set sampling frequency
-        self.sample_freq_entry = ttk.Spinbox(self.control_panel, from_ = 1000, to = 500000)
-
-        # create spinbox to set runs-to-average
-        self.runs_entry = ttk.Spinbox(self.control_panel, from_ = 1, to = 16)
 
         # create combobox to set analog channel
         channel_names = ['ai0', 'ai1', 'ai2', 'ai3', 'ai4', 'ai5', 'ai6', 'ai7']
         self.channel_select = ttk.Combobox(self.control_panel, values = channel_names)
-        
-        # create button widget to start acquiring
-        self.start_button = ttk.Button(self.control_panel, command = self.run)
 
-        # arrange widgets in window with .grid():
-        #   row 0:
-        self.image_canvas.grid(row = 0, column = 0, columnspan = 4)
-        #   row 1:
+        # create spinbox to set sampling frequency
+        self.sample_freq_entry = ttk.Spinbox(self.control_panel, from_ = 1000, to = 1000000)
+
+        # create spinbox to set runs-to-average
+        self.runs_entry = ttk.Spinbox(self.control_panel, from_ = 1, to = 32)
+
+        # create button widget to start acquiring
+        self.start_button = ttk.Button(self.control_panel, text = 'Start', command = self.run)
+
+        # label control panel widgets
+        self.channel_label = ttk.Label(self.control_panel, text = 'Select analog\nin channel:')
+        self.frequency_label = ttk.Label(self.control_panel, text = 'Set sampling\nfrequency (Hz):')
+        self.runs_label = ttk.Label(self.control_panel, text = 'Set number of traces\nto average (1-32):')
+        
+        # arrange widgets in control panel with .grid():
+        self.channel_label.grid(row = 0, column = 0)
+        self.frequency_label.grid(row = 0, column = 1)
+        self.runs_label.grid(row = 0, column = 2)
+        self.start_button.grid(row = 0, column = 3, rowspan = 2)
         self.channel_select.grid(row = 1, column = 0)
         self.sample_freq_entry.grid(row = 1, column = 1)
         self.runs_entry.grid(row = 1, column = 2)
-        self.start_button.grid(row = 1, column = 3)
         
+        # grid frame
+        self.grid()
+
         # create wolfram evaluation session to create plots
         self.session = ws.WolframSession()
 
-  
 
     def run(self):
         '''
-        try to set up task using entry widget values
-        '''
+        callback function of start button
         
+        initializes all the user-specified parameters and raises error messages if needed
+        '''
+        # try to measure ramp time
         try:
             self.meas_ramp_time()
         except:
-            pass
+            msg.showerror(title = 'NI-DAQmx Error', message = 'Ramp signal not detected')
+            self.mainloop()
+
+        # try to create task with user specified channel, sample rate, and measured time
+        try:
+            self.sample_frequency = int(self.sample_freq_entry.get())
+            self.num_points = int(self.ramp_time * self.sample_frequency)
+            self.task_init(self.sample_frequency, self.ramp_time, self.channel_select.get())
+        except:
+            msg.showerror(title = 'NI-DAQmx Error', message = 'Could not create task with specified sample rate and channel')
+            self.mainloop()
+
+        # try to get runs-to-average and create buffer
+        try:
+            self.runs_to_avg = int(self.runs_entry.get())
+            self.buffer = np.empty((self.runs_to_avg, 1, self.num_points))
+            self.buffer_index = len(self.buffer)
+        except:
+            msg.showerror(title = 'Averaging Error', message = 'Could not create buffer with specified number of runs')
+            self.mainloop()
+
+        # make initial call to data reading function
+        self.read_data()
+
+            
+    def read_data(self):
+        '''
+        data acquisition/analysis updating loop
+
+        called continuously with delay >= ramp time
+
+        manages the buffer, replacing the oldest trace with a newly acquired one
+        '''
+        # buffer index increment/loop
+        if self.buffer_index < len(self.buffer) - 1:
+            self.buffer_index += 1
+        else:
+            self.buffer_index = 0
+
+        # pass correct array from buffer into stream reader
+        self.reader.read_many_sample(self.buffer[self.buffer_index])
         
-        self.meas_ramp_time()
+        # average the data in the buffer
+        avg_data = self.average()
 
-        self.num_points = self.ramp_time * self.sample_freq_entry.get()
-        self.num_runs = self.runs_entry.get()
+        # fit index to frequency(MHz) using average data
+        fit = self.session.fit_fabry_perot_peaks(avg_data)
+        
+        # if fit returned a non empty array (sufficient peaks found) apply fit as scale
+        if len(fit) > 0:
+            #self.session.define_function('fit', ['n'], str(fit[0]) + '+' + str(fit[1]) + 'n +' + str(fit[2]) + 'n^2 +' + str(fit[3]) + 'n^3 +' + str(fit[4]) + 'n^4')
+            pass
+        # otherwise plot normally
+        else:
+            pass
 
-        self.buffer = np.empty(n)
+        # get plot image from data
+        self.plot = self.session.get_plot(avg_data)
 
-        i = n
-
-        while True:
-            if i < n:
-                i += 1
-            else:
-                i = 0
-            np.insert(self.buffer, i, )
-
-            self.reader.read_many_sample()
+        # draw image on canvas
+        self.image_canvas.create_image((0,0), image = self.plot, anchor = tk.NW)
+        
+        # make recursive delayed call of read_data() so mainloop() can run freely
+        self.image_canvas.after(int(self.ramp_time*1000), self.read_data)
 
 
     def average(self):
         '''
-        - averages data in buffer
+        averages data in buffer and returns as array
         '''
-        temp = []
+        temp = np.empty(self.num_points)
         for i in range(self.num_points):
             temp_val = 0.0
             for set in self.buffer:
-                temp_val += set[i]
-            temp[i] = temp_val/self.num_runs
-
+                temp_val += set[0][i]
+            temp[i] = temp_val/len(self.buffer)
+        print(self.session.fit_fabry_perot_peaks(temp))
+        return temp
 
 
     def meas_ramp_time(self):
@@ -177,28 +234,15 @@ class ContinuousDisplay(ttk.Frame):
         self.task.triggers.start_trigger.cfg_dig_edge_start_trig('/NI_PCIe-6351/PFI0')
 
         # add callback for start trigger to perform analysis / scope updates
-        
-
-    def create_array(self, iterations, channels, samp_rate, time):
-        '''
-        creates array of 2D arrays in memory to hold experimental data
-        
-        pass in number of times to run experiment (iterations), number of analog channels,
-        sampling rate (Hz), and ramp time (s)
-        
-        creates self.data array (where length <= iterations) of empty, identical, 
-        pre-allocated numpy arrays (M*N where M <= channels and N <= samp_rate * time)
-        '''
-        self.data = []
-
-        for i in range(iterations):
-            self.data.append(np.empty((channels, int(samp_rate*time))))
-        
 
 
+    def close(self):
+        self.session.end_session()
+        root.destroy()
 
 
 if __name__ == "__main__":
     root = tk.Tk()
     instance = ContinuousDisplay(root)
+    root.protocol('WM_DELETE_WINDOW', instance.close)
     instance.mainloop()
