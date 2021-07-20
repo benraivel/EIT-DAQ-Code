@@ -90,6 +90,8 @@ class ContinuousDisplay(ttk.Frame):
         callback function of start button
         
         initializes all the user-specified parameters and raises error messages if needed
+
+        creates data buffer 
         '''
         # try to measure ramp time
         try:
@@ -112,6 +114,8 @@ class ContinuousDisplay(ttk.Frame):
             self.runs_to_avg = int(self.runs_entry.get())
             self.buffer = np.empty((self.runs_to_avg, 1, self.num_points))
             self.buffer_index = len(self.buffer)
+
+            self.intercept_derivitive_buffer = np.empty(self.runs_to_avg)
         except:
             msg.showerror(title = 'Averaging Error', message = 'Could not create buffer with specified number of runs')
             self.mainloop()
@@ -138,13 +142,18 @@ class ContinuousDisplay(ttk.Frame):
         self.reader.read_many_sample(self.buffer[self.buffer_index])
         
         # average the data in the buffer
-        avg_data = self.average()
+        self.avg_data = self.average()
 
         # fit index to frequency(MHz) using average data
-        fit = self.session.fit_fabry_perot_peaks(avg_data)
+        if self.fit is not None:
+            self.prev_fit = self.fit
+        self.fit = self.session.fit_fabry_perot_peaks(self.avg_data)[0]
+
+        # calculate fit derivative(s?)
+        self.intercept_derivitive_buffer[self.buffer_index] = self.fit[0] - self.prev_fit[0]
         
         # if fit returned a non empty array (sufficient peaks found) apply fit as scale
-        if len(fit) > 0:
+        if len(self.fit) > 0:
             #self.session.define_function('fit', ['n'], str(fit[0]) + '+' + str(fit[1]) + 'n +' + str(fit[2]) + 'n^2 +' + str(fit[3]) + 'n^3 +' + str(fit[4]) + 'n^4')
             pass
         # otherwise plot normally
@@ -152,7 +161,7 @@ class ContinuousDisplay(ttk.Frame):
             pass
 
         # get plot image from data
-        self.plot = self.session.get_plot(avg_data)
+        self.plot = self.session.get_plot(self.avg_data)
 
         # draw image on canvas
         self.image_canvas.create_image((0,0), image = self.plot, anchor = tk.NW)
@@ -160,6 +169,12 @@ class ContinuousDisplay(ttk.Frame):
         # make recursive delayed call of read_data() so mainloop() can run freely
         self.image_canvas.after(int(self.ramp_time*1000), self.read_data)
 
+
+    def average_derivatives(self):
+        temp = 0
+        for derivative in self.intercept_derivitive_buffer:
+            temp += derivative
+        return temp/self.runs_to_avg
 
     def average(self):
         '''
@@ -239,6 +254,32 @@ class ContinuousDisplay(ttk.Frame):
     def close(self):
         self.session.end_session()
         root.destroy()
+
+
+    def save_to_file(self, data):
+
+        # get and format date and time information
+        date_time = time.ctime().split()
+        day = date_time[0] + ' ' + date_time[1] + ' ' + date_time[2] + ', ' + date_time[4]
+        current_time = date_time[3].split(':')[0] + ' ' + date_time[3].split(':')[1] + ' ' + date_time[3].split(':')[2]
+        
+        # try to create directories, pass if they already exist
+        if self.directory == None:
+            try:
+                os.mkdir('C:\\Users\\bjraiv23\\Desktop\\Experimental-Data\\FabryPerotPeakData\\')
+            except:
+                pass 
+            try:
+                os.mkdir('C:\\Users\\bjraiv23\\Desktop\\Experimental-Data\\FabryPerotPeakData\\' + day)    
+            except:
+                pass
+            try:
+                self.directory = 'C:\\Users\\bjraiv23\\Desktop\\Experimental-Data\\FabryPerotPeakData\\' + day + '\\' + current_time
+                os.mkdir(self.directory )  
+            except:
+                pass
+        else:
+            pass
 
 
 if __name__ == "__main__":
