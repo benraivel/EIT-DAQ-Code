@@ -145,12 +145,15 @@ class ContinuousDisplay(ttk.Frame):
         self.avg_data = self.average()
 
         # fit index to frequency(MHz) using average data
-        if self.fit is not None:
-            self.prev_fit = self.fit
-        self.fit = self.session.fit_fabry_perot_peaks(self.avg_data)[0]
+        try:
+            if self.fit is not None:
+                self.prev_fit = self.fit
+        except:
+            pass
+        self.fit = self.session.fit_fabryperot(self.avg_data)[0]
 
         # calculate fit derivative(s?)
-        self.intercept_derivitive_buffer[self.buffer_index] = self.fit[0] - self.prev_fit[0]
+        #self.intercept_derivitive_buffer[self.buffer_index] = self.fit[0] - self.prev_fit[0]
         
         # if fit returned a non empty array (sufficient peaks found) apply fit as scale
         if len(self.fit) > 0:
@@ -206,7 +209,7 @@ class ContinuousDisplay(ttk.Frame):
         # must connect signal to USER 1 BNC
         time_task.ci_channels.add_ci_pulse_width_chan('NI_PCIe-6351/ctr0', 'pulse_width_channel', min_val= 0.01, max_val= 2)
         
-        # expose task in stream
+        # expose task in stream 
         pulse_time_stream = nq._task_modules.in_stream.InStream(time_task)
         
         # create Counter Reader
@@ -252,7 +255,7 @@ class ContinuousDisplay(ttk.Frame):
 
 
     def close(self):
-        self.session.end_session()
+        self.session.end()
         root.destroy()
 
 

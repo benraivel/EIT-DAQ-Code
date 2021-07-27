@@ -2,12 +2,17 @@
 creates a wolfram language session
 
 methods use the session to run mathematica operations on python data
+
+notes:
+    - look closer at serializing and deserializing wxf
 '''
 
 # import wolfram client api modules
 import wolframclient
 from wolframclient.language import wl, wlexpr
 from wolframclient.evaluation import WolframLanguageSession
+from wolframclient.serializers import wolfram_encoder
+from wolframclient.deserializers import WXFConsumerNumpy
 
 # import other necessary modules
 import numpy as np
@@ -18,119 +23,105 @@ import subprocess
 import logging
 import warnings
 
-# cheat with scipy:
+# scipy
 from scipy.signal import find_peaks
+
+# get constants 
+import Constants as c
 
 
 class WolframSession():
     
     def __init__(self):
         ''' 
-        create wolfram language session, wait for start, record start time
+        create wolfram language session using numpy consumer
+        
+        wait for session start and record start time
         '''
-        self.session = WolframLanguageSession()
+        self.session = WolframLanguageSession(consumer = WXFConsumerNumpy)
         self.session.start(block = True)
         self.start_time = time.time()
 
 
-    def end_session(self):
+    def end(self):
         ''' 
-        ends session gracefully, returns string with total time session was active
+        ends session gracefully
+        
+        returns string with total time session was active
         '''
         self.end_time = time.time()
         self.session.stop()
         elapsed_time = timedelta(seconds = self.end_time - self.start_time)
+
         return 'Wolfram Language Client session finished \nTotal elapsed time: ' + str(elapsed_time)
 
-   
-    def find_fabry_perot_peaks(self, fp_array, smoothing = 80, sharpness = 0, threshold = 3):
-        '''
-        given a 1D array of fabry perot data:
-            - find peaks using smoothing and threshold
-            - return array of indices only
-        '''
-        peak_index_data = []
-        peaks = self.session.evaluate(wl.Transpose(wl.FindPeaks(fp_array, smoothing, sharpness, threshold)))
-        try:
-            indices = peaks[0]
-            for index in indices:
-                try:
-                    peak_index_data.append(int(index))
-                except:
-                    peak_index_data.append(int(index[0]/index[1]))
-        except:
-            pass
-        
-        return peak_index_data
 
-
-    def remove_duplicated_peaks(self, peaks):
+    def __gen_freqdat(self, peaks):
         '''
-        given found peaks, find peaks that are too close together and remove the lower
-        '''
-        # create array to hold peak seperation data
-        seperations = []
-    
-        # loop over peaks
-        for peak in peaks:
-            seperations.append()
+        creates data for fit_fabryperot
 
-    
-    def generate_frequency_data(self, peaks):
+        given a set of peak indicies return array: [[i0, 0], [i1, 91.5], ...]
+        '''
+        n = len(peaks)
+        data = []
         
-        npeak = len(peaks)
-        
-        freq_data = []
-        
-        for i in range(npeak):
-            freq_data.append([peaks[i], 91.5*i])
+        for i in range(n):
+            data.append([peaks[i], 91.5*i])
             
-        return freq_data
+        return data
 
 
-    def fit_fabry_perot_peaks(self, fp_array):
+    def fit_fabryperot(self, fp_data, threshold_voltage = 2, min_seperation= 1000):
         '''
-        given a 1D array of fabry perot data:
-            - find peak indices with find_fabry_perot_peaks()
-            - generate frequency 'data'
-            - return coefficients of quartic fit
+        finds peak indices with scipy
+
+        peaks must excede threshold_voltage and be seperated by min_seperation indices from the next nearest peak in either direction
+
+        return tuple: (quartic fit coefficients of data from gen_freqdat, peaks found by scipy)
         '''
-        #wolfram_peaks = self.find_fabry_perot_peaks(fp_array, smoothing = 80, sharpness = 0.0001, threshold = 1)
-        scipy_peaks = find_peaks(fp_array, height = 2, distance = 1000)      
-        data = self.generate_frequency_data(scipy_peaks[0])
+        peaks = find_peaks(fp_data, height = threshold_voltage, distance = min_seperation)      
+        data = self.__gen_freqdat(peaks[0])
         fit = self.session.evaluate(wl.CoefficientList(wl.Fit(data, wlexpr('{1, x, x^2, x^3, x^4}'), wlexpr('{x}')), wlexpr('{x}')))
         
-        return (fit, scipy_peaks)
+        return (fit, peaks)
 
 
-    def get_plot(self, data):
+    def meanshift(self, data, r, d):
         '''
-        given an array of data:
-            - plot with Listplot with full range
-            - rasterize as a large image and get pixel data in array
-            - convert to tk compatible image with PIL and return
+        filters data with MeanShiftFilter
         
-        try:
-            plot_data = np.asarray(np.uint8(self.session.evaluate(wl.ImageData(wl.Image(wl.ListPlot(data, PlotRange = 'Full', ScalingFunctions = [['fit', wl.InverseFunction('fit')], 'None']), ImageSize = 'Medium'), ImageResolution = 200)) * 255))
-        except:
-            plot_data = np.asarray(np.uint8(self.session.evaluate(wl.ImageData(wl.Image(wl.ListPlot(data, wlexpr('PlotRange -> Full'), wlexpr('ImageSize -> Medium')), wlexpr('ImageResolution -> 200')))) * 255))
+        averages points in domain +-r and range +-d
+        
+        preserves significant edges while reducing noise
         '''
-        plot_data = np.asarray(np.uint8(self.session.evaluate(wl.ImageData(wl.Image(wl.ListPlot(data, wlexpr('PlotRange -> Full'), wlexpr('ImageSize -> Medium')), wlexpr('ImageResolution -> 200')))) * 255))
+        return self.session.evaluate(wl.MeanShiftFilter(data, r, d))
+
+
+    def resample(self, data, new_length, scheme = "Bin"):
+        '''
+        resamples data to new length using scheme
+        '''
+        return self.session.evaluate(wl.ArrayResample(data, new_length, scheme))
+
+
+    def listplot(self, data, range = c.PlotRange.FULL, size = c.ImageSize.MEDIUM, resolution = c.ImageResolution.HIGH):
+        '''
+        plot with Listplot with full range
+
+        rasterize as a large image and get pixel data in array
+
+        return tk compatible Image object
+        '''
+        plot_data = np.asarray(np.uint8(self.session.evaluate(wl.ImageData(wl.Image(wl.ListPlot(data, range), size, resolution))) * 255))
 
         return ImageTk.PhotoImage(Image.fromarray(plot_data))
-
     
-    def define_function(self, name, arguments, definition):
-        function_str = name + '['
-        for argument in arguments:
-            function_str += argument + '_, '
-        function_str.rstrip()
-        function_str.rstrip()
-        function_str += '] := ' + definition
-        print(function_str)
-        self.session.evaluate(wlexpr(function_str))
+    
+    def def_function(self, name, arguments, definition):
+        pass
 
-    def load_data_for_test(self, return_fp = True):
+
+    def __load_testdata(self, return_fp = True):
         '''
         use for developing wolfram functions without needing to gather data
         
@@ -159,6 +150,8 @@ class WolframSession():
         else:
             return [difference_data, fabry_perot_data]
 
+
+    
 
 def terminate_kernels():
         ''' 
