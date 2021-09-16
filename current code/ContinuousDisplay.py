@@ -152,19 +152,8 @@ class ContinuousDisplay(ttk.Frame):
             pass
         self.fit = self.session.fit_fabryperot(self.avg_data)[0]
 
-        # calculate fit derivative(s?)
-        #self.intercept_derivitive_buffer[self.buffer_index] = self.fit[0] - self.prev_fit[0]
-        
-        # if fit returned a non empty array (sufficient peaks found) apply fit as scale
-        if len(self.fit) > 0:
-            #self.session.define_function('fit', ['n'], str(fit[0]) + '+' + str(fit[1]) + 'n +' + str(fit[2]) + 'n^2 +' + str(fit[3]) + 'n^3 +' + str(fit[4]) + 'n^4')
-            pass
-        # otherwise plot normally
-        else:
-            pass
-
         # get plot image from data
-        self.plot = self.session.get_plot(self.avg_data)
+        self.plot = self.session.listplot(self.avg_data)
 
         # draw image on canvas
         self.image_canvas.create_image((0,0), image = self.plot, anchor = tk.NW)
@@ -172,12 +161,6 @@ class ContinuousDisplay(ttk.Frame):
         # make recursive delayed call of read_data() so mainloop() can run freely
         self.image_canvas.after(int(self.ramp_time*1000), self.read_data)
 
-
-    def average_derivatives(self):
-        temp = 0
-        for derivative in self.intercept_derivitive_buffer:
-            temp += derivative
-        return temp/self.runs_to_avg
 
     def average(self):
         '''

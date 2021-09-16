@@ -1,12 +1,12 @@
 '''
-class to hold enumerated constants
+enumerated constants for WolframSession
 '''
 # import modules
 from enum import Enum
 from wolframclient.language import wlexpr
 
 
-## WolframSession enumerated wlexpr() ##
+## enumerated wlexpr() ##
 
 class PlotRange(Enum):
     FULL = wlexpr('PlotRange -> Full')

@@ -20,14 +20,12 @@ from PIL import Image, ImageTk
 import time
 from datetime import timedelta
 import subprocess
-import logging
-import warnings
 
 # scipy
 from scipy.signal import find_peaks
 
-# get constants 
-import Constants as c
+# get wolfram constants
+import WolframConstants as wc
 
 
 class WolframSession():
@@ -104,7 +102,7 @@ class WolframSession():
         return self.session.evaluate(wl.ArrayResample(data, new_length, scheme))
 
 
-    def listplot(self, data, range = c.PlotRange.FULL, size = c.ImageSize.MEDIUM, resolution = c.ImageResolution.HIGH):
+    def listplot(self, data, range = wc.PlotRange.FULL, size = wc.ImageSize.MEDIUM, resolution = wc.ImageResolution.HIGH):
         '''
         plot with Listplot with full range
 

@@ -125,36 +125,6 @@ class EITDisplay(ttk.Frame):
         pass
 
 
-    def time_ramp(self):
-        ''' 
-        - measures pulse width of 691 nm ramp-sync square wave using ctr0
-        
-        - signal must be connected to USER 1 and wired to PFI9
-        
-        - returns time (s)
-        '''
-        # create Task to measure ramp time
-        time_task = nq.Task()
-        
-        # add a pulse width counter channel using ctr0 
-        # clock terminal default: 100 MHz internal | gate terminal default: PFI9
-        # must connect signal to USER 1 BNC
-        time_task.ci_channels.add_ci_pulse_width_chan('NI_PCIe-6351/ctr0', 'pulse_width_channel', min_val= 0.01, max_val= 2)
-        
-        # expose task in stream
-        pulse_time_stream = nq._task_modules.in_stream.InStream(time_task)
-        
-        # create Counter Reader
-        pulse_time_reader = nq.stream_readers.CounterReader(pulse_time_stream)
-        
-        # take sample and convert 100 MHz clock ticks to seconds
-        ticks = pulse_time_reader.read_one_sample_uint32()
-        time_sec = ticks/100000000
-        
-        # close task
-        time_task.close()
-        
-        self.ramptime = time_sec
 
 # main method
 if __name__ == "__main__":
