@@ -23,7 +23,8 @@ from nidaqmx import *
 from nidaqmx.constants import Signal, AcquisitionType
 
 # import wolfram analysis functions
-import WolframSession as ws                                                                                                                                          
+import WolframSession as ws
+import EITAnalysis as analysis                                                                                                                                     
 
 # import other modules
 import numpy as np
@@ -150,7 +151,7 @@ class ContinuousDisplay(ttk.Frame):
                 self.prev_fit = self.fit
         except:
             pass
-        self.fit = self.session.fit_fabryperot(self.avg_data)[0]
+        self.fit = analysis.fit_fabry_perot_peaks()
 
         # get plot image from data
         self.plot = self.session.listplot(self.avg_data)

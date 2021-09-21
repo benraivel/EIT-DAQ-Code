@@ -1,5 +1,9 @@
 '''
 general purpose task constructor
+
+ for now only ai and di tasks supported
+
+ 
 '''
 # import NI python API 
 import nidaqmx as nq
