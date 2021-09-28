@@ -243,12 +243,11 @@ class ContinuousDisplay(ttk.Frame):
         root.destroy()
 
 
-    def save_to_file(self, data):
-
+    def save_to_file(self, data, filename = None):
         # get and format date and time information
         date_time = time.ctime().split()
-        day = date_time[0] + ' ' + date_time[1] + ' ' + date_time[2] + ', ' + date_time[4]
-        current_time = date_time[3].split(':')[0] + ' ' + date_time[3].split(':')[1] + ' ' + date_time[3].split(':')[2]
+        day = date_time[1] + '_' + date_time[2] + '_' + date_time[4]
+        current_time = date_time[3].split(':')[0] + ':' + date_time[3].split(':')[1] + ':' + date_time[3].split(':')[2]
         
         # try to create directories, pass if they already exist
         if self.directory == None:
