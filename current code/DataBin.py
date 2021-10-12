@@ -74,13 +74,13 @@ class DataBin:
             
     def expand_array(self, newlength):
         '''
-        double the size of data/tally array
+        increase the size of the array to newlength
         '''
         # create new data array (doubled size)
-        temp_data = np.empty(2*self.length)
+        temp_data = np.empty(newlength)
 
         # create new tally array (doubled size)
-        temp_tally = np.zeros(2*self.length)
+        temp_tally = np.zeros(newlength)
 
         # copy values over
         for i in range(len(self.data)):
@@ -90,7 +90,7 @@ class DataBin:
         # re-assign
         self.data = temp_data
         self.tally = temp_tally
-        self.length = self.length*2
+        self.length = newlength
 
 def main():
 
