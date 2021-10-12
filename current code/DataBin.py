@@ -97,8 +97,9 @@ def main():
     # create DataBin object
     avg_dat = DataBin()
 
-    for i in range(10):
+    all_data = []
 
+    for i in range(10):
         print('loading run' + str(i) + '.csv:')
         filestr = 'testdata/set4/run' + str(i) + '.csv'
         # import data for testing
@@ -111,21 +112,33 @@ def main():
         # select data signal
         data_signal = test_data.select_dimension(0).T[0]
 
+        all_data.append(data_signal)
+
         fit = an.fit_fabry_perot_peaks(fabry_perot, threshold=2)
 
         fit_poly = fit['poly']
 
-        print('fit coeff:' + str(fit_poly.coef))
+        print('fit coeff:' + str(fit_poly.coef) + '\n\n')
 
         avg_dat.insert_set(data_signal, fit_poly)
 
-        if i ==9:
+        if i == 0:
+            plt.subplot(311)
             plt.scatter(fit['freq_data'], data_signal, s = 1)
-            plt.show()
+
+    all_data = np.array(all_data)
+
+    avg = np.average(all_data, axis = 0)
+    idx = np.arange(len(avg))
 
     freq = np.linspace(0, avg_dat.length*avg_dat.bin_size, avg_dat.length)
-    plt.scatter(freq, avg_dat.get_data()[0], s= 1)
+    plt.subplot(312)
+    plt.scatter(freq, avg_dat.get_data()[0], s = 1)
+    plt.subplot(313)
+    plt.scatter(idx, avg, s = 1)
     plt.show()
+    print(np.amax(avg_dat.get_data()[0]))
+    print(np.amax(avg))
 
 # main method for offline testing
 if __name__ == "__main__":
