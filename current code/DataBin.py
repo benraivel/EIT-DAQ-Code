@@ -12,32 +12,44 @@ A class to hold aggregated data once mapped on to frequency
 '''
 class DataBin:
     def __init__(self, range = 1000, bin_size = 0.1):
+        '''
+        creates DataBin object to aggregate many sucessive sets of timeseries data
+        
+        '''
         # set data bin size
         self.bin_size = bin_size
 
         # compute length
         self.length = int(range/bin_size)
+
+        # create arrays to hold data
         self.data = np.empty(self.length)
         self.tally = np.zeros(self.length)
     
     def get_data(self):
+        '''
+        returns tuple: (data, tally)
+        '''
         return (self.data, self.tally)
 
     def insert_set(self, data_set, mapping_polynomial):
         '''
-        add data_set to self.data
+        add data_set to self.data using mapping_polynomial to find the index at which to insert each point
         '''
+        # determine the max index value this set will produce
+        max = mapping_polynomial(len(data_set))
+
+        # if it is greater than the current arrays can hold, expand them
+        if max > self.length:
+            self.expand_array(max)
+
         # for each point
         for i in range(len(data_set)):
 
-            # if its location is >0MHz
+            # if it maps to >0MHz
             if mapping_polynomial(i) > 0:
                 data_value = data_set[i]
                 new_index = int(mapping_polynomial(i)/self.bin_size)
-
-                # check if the current array can hold the value
-                if new_index >= self.length:
-                    self.expand_array(new_index)
 
                 # if a value exists at the location:
                 if self.tally[new_index] != 0:
@@ -54,23 +66,21 @@ class DataBin:
                     # compute new average value
                     self.data[new_index] = new_total/self.tally[new_index]
 
-                # otherwise:
+                # otherwise add the new value and set the tally to one
                 else:
                     self.data[new_index] = data_value
                     self.tally[new_index] = 1
 
             
-    def expand_array(self, new_length):
+    def expand_array(self, newlength):
         '''
-        appropriatley increase size of array
+        double the size of data/tally array
         '''
-        self.length = new_length+1
-        print('Expanded!')
         # create new data array (doubled size)
-        temp_data = np.empty(self.length)
+        temp_data = np.empty(2*self.length)
 
         # create new tally array (doubled size)
-        temp_tally = np.zeros(self.length)
+        temp_tally = np.zeros(2*self.length)
 
         # copy values over
         for i in range(len(self.data)):
@@ -80,18 +90,17 @@ class DataBin:
         # re-assign
         self.data = temp_data
         self.tally = temp_tally
+        self.length = self.length*2
 
 def main():
 
     # create DataBin object
     avg_dat = DataBin()
 
-    all_data = []
-
     for i in range(10):
 
         print('loading run' + str(i) + '.csv:')
-        filestr = 'testdata/set2/run' + str(i) + '.csv'
+        filestr = 'testdata/set4/run' + str(i) + '.csv'
         # import data for testing
         test_data = data.Data(filestr)
         
@@ -102,33 +111,21 @@ def main():
         # select data signal
         data_signal = test_data.select_dimension(0).T[0]
 
-        all_data.append(data_signal)
-
         fit = an.fit_fabry_perot_peaks(fabry_perot, threshold=2)
 
         fit_poly = fit['poly']
 
-        print('fit coeff:' + str(fit_poly.coef) + '\n\n')
+        print('fit coeff:' + str(fit_poly.coef))
 
         avg_dat.insert_set(data_signal, fit_poly)
 
-        if i == 0:
-            plt.subplot(311)
+        if i ==9:
             plt.scatter(fit['freq_data'], data_signal, s = 1)
-
-    all_data = np.array(all_data)
-
-    avg = np.average(all_data, axis = 0)
-    idx = np.arange(len(avg))
+            plt.show()
 
     freq = np.linspace(0, avg_dat.length*avg_dat.bin_size, avg_dat.length)
-    plt.subplot(312)
-    plt.scatter(freq, avg_dat.get_data()[0], s = 1)
-    plt.subplot(313)
-    plt.scatter(idx, avg, s = 1)
+    plt.scatter(freq, avg_dat.get_data()[0], s= 1)
     plt.show()
-    print(np.amax(avg_dat.get_data()[0]))
-    print(np.amax(avg))
 
 # main method for offline testing
 if __name__ == "__main__":
