@@ -1,64 +1,79 @@
+
+# import libraries
 import numpy as np
-import data
-import EITAnalysis as an
-
+import pandas as pd
 import matplotlib.pyplot as plt
-'''
-A class to hold aggregated data once mapped on to frequency
-    - stores an average value and a tally for each 'bin'
-    - bin size given in MHz
-    - 0 MHz at first fabry perot peak
 
-'''
+# import analysis functions
+from EITAnalysis import fit_fabry_perot_peaks
+
 class DataBin:
+    '''
+    Maps data into agregated array based on fabry perot fit
+        - stores an average value and a tally for each 'bin'
+        - bin size given in MHz
+        - 0 MHz at first fabry perot peak
+    '''
+
     def __init__(self, range = 1000, bin_size = 0.1):
         '''
         creates DataBin object to aggregate many sucessive sets of timeseries data
         
         '''
+        # init number of sets
+        self.num_sets = 0
+
         # set data bin size
         self.bin_size = bin_size
 
         # compute length
-        self.length = int(range/bin_size)
+        self.arr_length = int(range/bin_size)
 
-        # create arrays to hold data
-        self.data = np.empty(self.length)
-        self.tally = np.zeros(self.length)
+        # create arrays to hold data and tally
+        self.data = np.empty(self.arr_length)
+        self.tally = np.zeros(self.arr_length)
     
+    def __str__(self):
+        '''
+        return string representation of DataBin object
+        '''
+        return 'DataBin object:\n\tnumber of data sets: ' + str(self.num_sets) + '\n\tnumber of bins: ' + str(self.length)
+
     def get_data(self):
         '''
         returns tuple: (data, tally)
         '''
         return (self.data, self.tally)
 
-    def insert_set(self, data_set, mapping_polynomial):
+    def insert_set(self, new_set, mapping_polynomial):
         '''
-        add data_set to self.data using mapping_polynomial to find the index at which to insert each point
+        adds data_set to self.data
+        
+        uses mapping_polynomial to find the index at which to insert each point
         '''
         # determine the max index value this set will produce
-        max = mapping_polynomial(len(data_set))
+        max = mapping_polynomial(len(new_set))
 
-        # if it is greater than the current arrays can hold, expand them
-        if max > self.length:
+        # if it is greater than the current array length expand them appropriatley 
+        if max > self.arr_length:
             self.expand_array(max)
 
         # for each point
-        for i in range(len(data_set)):
+        for i in range(len(new_set)):
 
             # if it maps to >0MHz
             if mapping_polynomial(i) > 0:
-                data_value = data_set[i]
+                new_value = new_set[i]
                 new_index = int(mapping_polynomial(i)/self.bin_size)
 
                 # if a value exists at the location:
                 if self.tally[new_index] != 0:
                     
-                    # compute total
-                    total = self.data[new_index]*self.tally[new_index]
+                    # compute current total
+                    curr_total = self.data[new_index]*self.tally[new_index]
 
                     # increase by new value
-                    new_total = total + data_value
+                    new_total = curr_total + new_value
 
                     # increment tally
                     self.tally[new_index] = self.tally[new_index] + 1
@@ -68,10 +83,12 @@ class DataBin:
 
                 # otherwise add the new value and set the tally to one
                 else:
-                    self.data[new_index] = data_value
+                    self.data[new_index] = new_value
                     self.tally[new_index] = 1
+        
+        # increment set counter
+        self.num_sets += 1
 
-            
     def expand_array(self, newlength):
         '''
         increase the size of the array to newlength
@@ -92,33 +109,43 @@ class DataBin:
         self.tally = temp_tally
         self.length = newlength
 
+# class test functions:
 def main():
 
     # create DataBin object
     avg_dat = DataBin()
 
+    # create array for normal average
     all_data = []
 
+    # for each data set in the folder
     for i in range(10):
+
         print('loading run' + str(i) + '.csv:')
+
+        # update file to read
         filestr = 'testdata/set4/run' + str(i) + '.csv'
+
         # import data for testing
-        test_data = data.Data(filestr)
+        test_data = pd.read_csv(filestr)
         
         # select fabry perot data
-        fabry_perot = test_data.select_dimension(1).T[0]
+        fabry_perot = test_data.iloc[:,1]
         print('max fp value:' + str(np.amax(fabry_perot)))
 
         # select data signal
-        data_signal = test_data.select_dimension(0).T[0]
+        data_signal = test_data.iloc[:,0]
 
+        # add to normal average array
         all_data.append(data_signal)
 
-        fit = an.fit_fabry_perot_peaks(fabry_perot, threshold=2)
+        # get fit from fabry perot
+        fit = fit_fabry_perot_peaks(fabry_perot, threshold=2)
 
+        # get polynomial of fit
         fit_poly = fit['poly']
 
-        print('fit coeff:' + str(fit_poly.coef) + '\n\n')
+        print('fit coeff:' + str(fit_poly.coef.round(2)) + '\n\n')
 
         avg_dat.insert_set(data_signal, fit_poly)
 
@@ -139,7 +166,7 @@ def main():
     plt.show()
     print(np.amax(avg_dat.get_data()[0]))
     print(np.amax(avg))
+    print(avg_dat)
 
-# main method for offline testing
 if __name__ == "__main__":
     main()

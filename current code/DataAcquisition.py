@@ -1,9 +1,9 @@
 '''
-when run as __main__ main([iterations], [sampling rate]) is called with parameters:
-    iterations = 10
-    sampling rate = 100,000 Hz
+when run main(iter, samp_rate) is called with parameters:
+    iter = 10
+    samp_rate = 100,000 Hz
     
-records [iterations] sets of data at [sampling rate] for channels:
+records iter sets of data at samp_rate for channels:
     'ai0' : difference signal
     'ai1' : fabry perot signal
     
@@ -19,7 +19,8 @@ from nidaqmx import *
 # import necessary nidaqmx constants
 from nidaqmx.constants import AcquisitionType
 
-import WolframSession as ws                                                                                                                                          
+# import analysis functions
+from EITAnalysis import fit_fabry_perot_peaks                                                                                                                                       
 
 # import other modules
 import numpy as np
@@ -58,8 +59,6 @@ def meas_ramp_time():
     
     return time_sec
 
-
-
 def task_init(samp_rate, time):
     ''' 
     creates and configures nidaqmx task for collecting data
@@ -89,92 +88,20 @@ def task_init(samp_rate, time):
     
     return reader
 
-
-
 def create_array(iterations, channels, samp_rate, time):
     '''
     creates array of 2D arrays in memory to hold experimental data
     
-    pass in number of times to run experiment (iterations), number of analog channels,
-    sampling rate (Hz), and ramp time (s)
+    pass in iterations, number of analog channels, sampling rate (Hz), and ramp time (s)
     
-    returns data array (where length <= iterations) of empty, identical, 
-    pre-allocated numpy arrays (M*N where M <= channels and N <= samp_rate * time)
+    returns data array (L*M*N where L <= iterations, M <= channels, and N <= samp_rate * time)
     '''
-    data = []
-    for i in range(iterations):
-        data.append(np.empty((channels, int(samp_rate*time))))
-    return data
-
-
-
-def analyze_single(session, single_set):
-    '''
-    using a WolframSession() fit one set
-    '''
-    difference = single_set[0]
-    fabry_perot = single_set[1]
+    return np.empty(iterations, channels, samp_rate*time)
     
-    peaks = session.find_fabry_perot_peaks(fabry_perot)
-    
-    return peaks
-
-
-def analyze_all(data):
-    '''
-    iterate analyze_single use fits to offset data sets by integer amount of indicies then average
-    '''
-    analysis_session = ws.WolframSession()
-    peaks_collection = []
-    for single_set in data:
-        peaks_collection.append(analyze_single(analysis_session, single_set))
-        
-    return peaks_collection
-
-def analyze_peak_seperations(peaks):
-    '''
-    find seperation in indices between peaks
-    
-    use to detect peaks that are strangely-too-close-together
-    
-    possibly useful to tune smoothing/threshold
-    
-    also a slightly isolated set of more seperated peaks
-    '''
-    
-    seperation_set = []
-    
-    for peak_data in peaks:
-        seperations = []
-        
-        for i in range(len(peak_data)):
-            try:
-                seperations.append(peak_data[i+1] - peak_data[i])
-            except:
-               pass
-        seperation_set.append(seperations)  
-    return seperation_set  
-
-
-
 def average_data(data):
     '''
     find a basic average
     '''
-
-    size = len(data[0][0])
-    iterations = len(data)
-    avg_difference = np.zeros(size)
-    avg_fabry_perot = np.zeros(size)
-    for data_set in data:
-        for i in range(size):
-            avg_difference[i] += data_set[0][i]
-            avg_fabry_perot += data_set[1][i]
-    for point in avg_difference:
-        point = point/iterations
-    for point in avg_fabry_perot:
-        point = point/iterations
-    return [avg_difference, avg_fabry_perot]
 
 def save_data(data):
     '''
@@ -220,8 +147,6 @@ def save_data(data):
             
         file.close()
 
-
-
 def main(iterations, samp_rate):
     ''' 
     performs basic experimental process by calling other functions in file in sucession
@@ -256,9 +181,13 @@ def main(iterations, samp_rate):
     #print(analyze_peak_seperations(peaks))
     # write data to file
     save_data(data)
-     
 
+# file test function
+def test_func():
+    arr = create_array(100, 3, 10000, 0.5)
+    print(arr.shape)
 
 # file main method call
 if __name__ == "__main__":
-    main(10, 500000)
+    #main(10, 500000)
+    test_func()

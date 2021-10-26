@@ -3,11 +3,11 @@ replacing wolframsession with scipy
 '''
 
 import numpy as np
+import pandas as pd
 from PIL import Image, ImageTk
 import time
 from datetime import timedelta
 import subprocess
-import data
 
 import matplotlib.pyplot as plt
 
@@ -42,12 +42,10 @@ def fit_fabry_perot_peaks(data, threshold, seperation = 1000, order = 5,  npeaks
 
     return {'poly' : poly, 'n' : num_found, 'peak_heights' : heights, 'freq_data' : freq}
 
-
-
-    
+ 
 def main():
     # import data for testing
-    test_data = data.Data('testdata/set1/run1.csv')
+    test_data = pd.read_csv('testdata/set1/run1.csv')
     
     # select fabry perot data
     fabry_perot = test_data.select_dimension(1).T[0]

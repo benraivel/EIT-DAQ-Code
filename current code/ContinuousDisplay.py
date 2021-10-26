@@ -22,9 +22,8 @@ from nidaqmx import *
 # import nidaqmx constants
 from nidaqmx.constants import Signal, AcquisitionType
 
-# import wolfram analysis functions
-import WolframSession as ws
-import EITAnalysis as analysis                                                                                                                                     
+# import analysis functions
+from EITAnalysis import fit_fabry_perot_peaks                                                                                                                                     
 
 # import other modules
 import numpy as np
@@ -41,8 +40,41 @@ class ContinuousDisplay(ttk.Frame):
         # call parent init
         super().__init__(parent)
         self.parent = parent
+        self.__init_window()
 
-        # create and grid tk/ttk frame with canvas to plot image
+    def __init_task(self, samp_rate, time, channel_str):
+        ''' 
+        creates and configures nidaqmx task for collecting data
+        
+        pass in sampling rate (Hz) and ramp time (s)
+        
+        creates self.reader
+        '''
+        # create analog data reading task
+        self.task = nq.Task()
+        
+        # add channels (aio: difference signal | ai1: fabry perot)
+        self.task.ai_channels.add_ai_voltage_chan('NI_PCIe-6351/' + channel_str)
+        
+        # expose task data stream
+        in_stream = nq._task_modules.in_stream.InStream(self.task)
+        
+        # create Analog Multi Channel Reader
+        self.reader = nq.stream_readers.AnalogMultiChannelReader(in_stream)
+        
+        # configure task timing (set sampling rate and number of samples to read)
+        self.task.timing.cfg_samp_clk_timing(samp_rate, sample_mode = AcquisitionType.FINITE, samps_per_chan = int(samp_rate * time))
+        
+        # configure the start trigger (source: PFI0)
+        self.task.triggers.start_trigger.cfg_dig_edge_start_trig('/NI_PCIe-6351/PFI0')
+
+        # add callback for start trigger to perform analysis / scope updates
+
+    def __init_window(self):
+        '''
+        create ttk widgets and arrange
+        '''
+         # create and grid tk/ttk frame with canvas to plot image
         self.scope_frame = ttk.Frame(self.parent)
         self.image_canvas = tk.Canvas(self.scope_frame, height = 643, width = 1000)
         self.image_canvas.grid(padx = 50, pady = 50)
@@ -63,7 +95,7 @@ class ContinuousDisplay(ttk.Frame):
         self.runs_entry = ttk.Spinbox(self.control_panel, from_ = 1, to = 32)
 
         # create button widget to start acquiring
-        self.start_button = ttk.Button(self.control_panel, text = 'Start', command = self.run)
+        self.start_button = ttk.Button(self.control_panel, text = 'Start', command = self.start)
 
         # label control panel widgets
         self.channel_label = ttk.Label(self.control_panel, text = 'Select analog\nin channel:')
@@ -82,11 +114,7 @@ class ContinuousDisplay(ttk.Frame):
         # grid frame
         self.grid()
 
-        # create wolfram evaluation session to create plots
-        self.session = ws.WolframSession()
-
-
-    def run(self):
+    def start(self):
         '''
         callback function of start button
         
@@ -105,7 +133,7 @@ class ContinuousDisplay(ttk.Frame):
         try:
             self.sample_frequency = int(self.sample_freq_entry.get())
             self.num_points = int(self.ramp_time * self.sample_frequency)
-            self.task_init(self.sample_frequency, self.ramp_time, self.channel_select.get())
+            self.__init_task(self.sample_frequency, self.ramp_time, self.channel_select.get())
         except:
             msg.showerror(title = 'NI-DAQmx Error', message = 'Could not create task with specified sample rate and channel')
             self.mainloop()
@@ -122,10 +150,9 @@ class ContinuousDisplay(ttk.Frame):
             self.mainloop()
 
         # make initial call to data reading function
-        self.read_data()
-
-            
-    def read_data(self):
+        self.run()
+       
+    def run(self):
         '''
         data acquisition/analysis updating loop
 
@@ -151,7 +178,7 @@ class ContinuousDisplay(ttk.Frame):
                 self.prev_fit = self.fit
         except:
             pass
-        self.fit = analysis.fit_fabry_perot_peaks()
+        self.fit = fit_fabry_perot_peaks()
 
         # get plot image from data
         self.plot = self.session.listplot(self.avg_data)
@@ -161,7 +188,6 @@ class ContinuousDisplay(ttk.Frame):
         
         # make recursive delayed call of read_data() so mainloop() can run freely
         self.image_canvas.after(int(self.ramp_time*1000), self.read_data)
-
 
     def average(self):
         '''
@@ -175,7 +201,6 @@ class ContinuousDisplay(ttk.Frame):
             temp[i] = temp_val/len(self.buffer)
         print(self.session.fit_fabry_perot_peaks(temp))
         return temp
-
 
     def meas_ramp_time(self):
         ''' 
@@ -208,40 +233,8 @@ class ContinuousDisplay(ttk.Frame):
         
         self.ramp_time = time_sec
 
-
-    def task_init(self, samp_rate, time, channel_str):
-        ''' 
-        creates and configures nidaqmx task for collecting data
-        
-        pass in sampling rate (Hz) and ramp time (s)
-        
-        creates self.reader
-        '''
-        # create analog data reading task
-        self.task = nq.Task()
-        
-        # add channels (aio: difference signal | ai1: fabry perot)
-        self.task.ai_channels.add_ai_voltage_chan('NI_PCIe-6351/' + channel_str)
-        
-        # expose task data stream
-        in_stream = nq._task_modules.in_stream.InStream(self.task)
-        
-        # create Analog Multi Channel Reader
-        self.reader = nq.stream_readers.AnalogMultiChannelReader(in_stream)
-        
-        # configure task timing (set sampling rate and number of samples to read)
-        self.task.timing.cfg_samp_clk_timing(samp_rate, sample_mode = AcquisitionType.FINITE, samps_per_chan = int(samp_rate * time))
-        
-        # configure the start trigger (source: PFI0)
-        self.task.triggers.start_trigger.cfg_dig_edge_start_trig('/NI_PCIe-6351/PFI0')
-
-        # add callback for start trigger to perform analysis / scope updates
-
-
     def close(self):
-        self.session.end()
         root.destroy()
-
 
     def save_to_file(self, data, filename = None):
         # get and format date and time information
@@ -266,7 +259,6 @@ class ContinuousDisplay(ttk.Frame):
                 pass
         else:
             pass
-
 
 if __name__ == "__main__":
     root = tk.Tk()
